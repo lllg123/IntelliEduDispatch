@@ -53,4 +53,3 @@ python manage.py runserver
 旧项目的 [SCOPE.md](SCOPE.md)、[DATA_MODEL.md](DATA_MODEL.md)、[PHASE3.md](PHASE3.md)、[PHASE5.md](PHASE5.md) 为历史开发记录，新的功能范围以 [TEACHING_DESIGN.md](TEACHING_DESIGN.md) 为准。
 
 本项目保留原代码的 [LICENSE](LICENSE) 与 [NOTICE](NOTICE)。
-
