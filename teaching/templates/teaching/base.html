@@ -1,0 +1,31 @@
+{% load static %}
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}智慧调度{% endblock %}｜基于LLM的智慧教学资源智能调度系统</title>
+    <link rel="stylesheet" href="{% static 'teaching/teaching.css' %}">
+</head>
+<body>
+    <header class="topbar">
+        <a class="brand" href="{% url 'teaching:dashboard' %}"><span class="brand-mark">AI</span><span>基于LLM的智慧教学资源<span class="brand-sub">智能调度系统</span></span></a>
+        <nav class="topnav" aria-label="主导航">
+            <a href="{% url 'teaching:dashboard' %}">工作台</a>
+            <a href="{% url 'teaching:resource_list' %}">教学资源</a>
+            <a href="{% url 'teaching:request_list' %}">调度需求</a>
+            <a href="{% url 'teaching:request_create' %}">发起需求</a>
+            <a href="{% url 'teaching:request_assistant' %}">AI 需求解析</a>
+            {% if request.user.profile.role == 'ADMIN' %}<a href="{% url 'inventory:team_management' %}">用户与权限</a>{% endif %}
+        </nav>
+        <div class="account">{{ request.user.username }}
+            <form action="{% url 'logout' %}" method="post">{% csrf_token %}<button class="text-button" type="submit">退出</button></form>
+        </div>
+    </header>
+    <main class="page">
+        {% if messages %}<div class="messages" role="status">{% for message in messages %}<div class="notice {{ message.tags }}">{{ message }}</div>{% endfor %}</div>{% endif %}
+        {% block content %}{% endblock %}
+    </main>
+    <footer class="footer">教学资源调度 · 规则约束保证安全，LLM 提供辅助建议，管理员确认最终安排</footer>
+</body>
+</html>

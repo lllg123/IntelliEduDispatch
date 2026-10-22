@@ -1,0 +1,23 @@
+{% extends "inventory/base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <p class="eyebrow">Stock count</p>
+        <h1>新建库存盘点</h1>
+        <p>系统会记录当前启用物资的账面快照，后续录入实盘数量并确认差异。</p>
+    </div>
+</div>
+
+<div class="form-card">
+    <form method="post" data-busy-text="正在创建…">
+        {% csrf_token %}
+        <label for="notes">盘点说明</label>
+        <textarea id="notes" name="notes" rows="4" placeholder="例如：月末例行盘点"></textarea>
+        <div class="form-actions">
+            <button type="submit">创建盘点单</button>
+            <a class="link-button button-ghost" href="{% url 'inventory:inventory_count_list' %}">取消</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,24 @@
+<h4>预览：{{ instance.name }}</h4>
+<p><strong>编码：</strong> 
+    {% if model_name == 'section' %}{{ instance.section_code }}{% endif %}
+    {% if model_name == 'space' %}{{ instance.space_code }}{% endif %}
+    {% if model_name == 'item' %}{{ instance.item_code }}{% endif %}
+</p>
+<p><strong>说明：</strong> {{ instance.description|default:"暂无" }}</p>
+
+{% if model_name == 'item' %}
+    <p><strong>当前库存：</strong> {{ instance.quantity }} {{ instance.unit }}</p>
+{% endif %}
+
+<div class="action-area">
+    <a href="{{ instance.get_absolute_url }}">查看详情</a>
+    
+    {% if request.user.profile.role == 'ADMIN' %}
+        {% if model_name == 'section' %}
+            <a href="{% url 'inventory:space_create' instance.section_code %}" class="link-button">新增存放位置</a>
+        {% endif %}
+        {% if model_name == 'space' %}
+            <a href="{% url 'inventory:item_create' instance.section.section_code instance.space_code %}" class="link-button">新增物资</a>
+        {% endif %}
+    {% endif %}
+</div>

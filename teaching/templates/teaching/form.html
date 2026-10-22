@@ -1,0 +1,9 @@
+{% extends 'teaching/base.html' %}
+{% block title %}{{ heading }}{% endblock %}
+{% block content %}
+<div class="page-head"><div><p class="eyebrow">NEW ENTRY</p><h1>{{ heading }}</h1><p>填写准确的容量与能力标签，可以得到更有效的匹配结果。</p></div></div>
+<section class="panel form-panel"><form method="post" {% if form_action %}action="{{ form_action }}"{% endif %}>{% csrf_token %}
+{% for field in form %}<div class="field"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}{% for error in field.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</div>{% endfor %}
+{% for error in form.non_field_errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+<div class="actions"><button class="button primary" type="submit">保存并继续</button><a class="button light" href="{% url 'teaching:dashboard' %}">返回工作台</a></div></form></section>
+{% endblock %}

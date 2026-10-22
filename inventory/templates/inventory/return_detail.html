@@ -1,0 +1,50 @@
+{% extends "inventory/base.html" %}
+
+{% block content %}
+<div class="detail-hero">
+    <div>
+        <p class="eyebrow">Return detail</p>
+        <h1>归还单 <span class="muted">#{{ return_record.return_no|stringformat:"s"|slice:":8" }}</span></h1>
+        <p>归还成员：{{ return_record.member.name }}</p>
+    </div>
+    <span class="status-badge status-{{ return_record.status|lower }}">{{ return_record.get_status_display }}</span>
+</div>
+
+<div class="meta-grid">
+    <div class="meta-item"><span class="meta-label">归还成员</span><span class="meta-value">{{ return_record.member.name }}</span></div>
+    <div class="meta-item"><span class="meta-label">提交时间</span><span class="meta-value">{{ return_record.submitted_at|date:"Y-m-d H:i"|default:"未提交" }}</span></div>
+    <div class="meta-item"><span class="meta-label">验收人</span><span class="meta-value">{{ return_record.processed_by.username|default:"待验收" }}</span></div>
+    <div class="meta-item"><span class="meta-label">确认时间</span><span class="meta-value">{{ return_record.confirmed_at|date:"Y-m-d H:i"|default:"—" }}</span></div>
+</div>
+
+{% if return_record.notes %}<div class="panel"><strong>归还说明</strong><p>{{ return_record.notes }}</p></div>{% endif %}
+
+<section class="panel">
+    <h2 style="margin-top:0;">归还明细</h2>
+    <div class="table-scroll">
+    <table class="list-table">
+        <thead><tr><th>原申请</th><th>物资</th><th>数量</th><th>状态</th><th>备注</th></tr></thead>
+        <tbody>
+        {% for line in lines %}
+        <tr>
+            <td class="table-number">{{ line.requisition_item.requisition.request_no|stringformat:"s"|slice:":8" }}</td>
+            <td>{{ line.requisition_item.item.name }}</td>
+            <td class="table-number">{{ line.quantity }} {{ line.requisition_item.item.unit }}</td>
+            <td><span class="status-badge {% if line.condition == 'OK' %}status-confirmed{% else %}status-rejected{% endif %}">{{ line.get_condition_display }}</span></td>
+            <td>{{ line.notes|default:"—" }}</td>
+        </tr>
+        {% empty %}<tr><td colspan="5">归还单暂无明细。</td></tr>{% endfor %}
+        </tbody>
+    </table>
+    </div>
+    {% if is_admin and return_record.status == 'SUBMITTED' %}
+    <div class="action-toolbar">
+        <form method="post" action="{% url 'inventory:return_confirm' return_no=return_record.return_no %}" data-busy-text="正在验收…">
+            {% csrf_token %}<button type="submit">确认归还并更新库存</button>
+        </form>
+    </div>
+    {% endif %}
+</section>
+
+<p><a href="{% url 'inventory:requisition_list' %}">← 返回领用申请列表</a></p>
+{% endblock %}

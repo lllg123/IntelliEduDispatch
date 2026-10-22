@@ -1,0 +1,138 @@
+{% extends "inventory/base.html" %}
+
+{% block content %}
+<div class="detail-hero">
+    <div>
+        <p class="eyebrow">Requisition detail</p>
+        <h1>领用申请 <span class="muted">#{{ requisition.request_no|stringformat:"s"|slice:":8" }}</span></h1>
+        <p>{{ requisition.purpose }}</p>
+    </div>
+    <span class="status-badge status-{{ requisition.status|lower }}">{{ requisition.get_status_display }}</span>
+</div>
+
+<div class="meta-grid">
+    <div class="meta-item"><span class="meta-label">申请成员</span><span class="meta-value">{{ requisition.member.name }}</span></div>
+    <div class="meta-item"><span class="meta-label">成员编号</span><span class="meta-value">{{ requisition.member.member_code }}</span></div>
+    <div class="meta-item"><span class="meta-label">创建时间</span><span class="meta-value">{{ requisition.created_at|date:"Y-m-d H:i" }}</span></div>
+    <div class="meta-item"><span class="meta-label">计划归还</span><span class="meta-value">{{ requisition.planned_return_date|date:"Y-m-d H:i"|default:"不需要归还" }}</span></div>
+</div>
+
+{% if requisition.notes %}
+<div class="panel"><strong>申请备注</strong><p>{{ requisition.notes }}</p></div>
+{% endif %}
+{% if requisition.reject_reason %}
+<div class="panel" style="border-color:#f3c2c2;background:#fff7f7;"><strong class="destructive">驳回原因</strong><p>{{ requisition.reject_reason }}</p></div>
+{% endif %}
+
+<section class="panel">
+    <div class="page-header" style="margin-bottom:12px;">
+        <div><h2 style="margin:0;border:0;padding:0;">申请明细</h2><p class="muted">每种物资在同一申请中只保留一行。</p></div>
+    </div>
+    {% if lines %}
+    <div class="table-scroll">
+    <table class="list-table">
+        <thead><tr><th>物资</th><th>位置</th><th>申请</th><th>批准</th><th>已出库</th><th>已归还</th><th>操作</th></tr></thead>
+        <tbody>
+        {% for line in lines %}
+        <tr>
+            <td><strong>{{ line.item.name }}</strong><br><small>{{ line.item.get_material_type_display }}</small></td>
+            <td>{{ line.item.space.section.name }} / {{ line.item.space.name }}</td>
+            <td class="table-number">{{ line.quantity_requested }} {{ line.item.unit }}</td>
+            <td class="table-number">{{ line.quantity_approved }} {{ line.item.unit }}</td>
+            <td class="table-number">{{ line.quantity_issued }} {{ line.item.unit }}</td>
+            <td class="table-number">{{ line.quantity_returned }} {{ line.item.unit }}</td>
+            <td>
+                {% if requisition.status == 'DRAFT' %}
+                <form method="post" action="{% url 'inventory:requisition_remove_line' request_no=requisition.request_no line_id=line.id %}" data-confirm="确定从申请中删除这项物资吗？">
+                    {% csrf_token %}<button class="button-ghost" type="submit">删除</button>
+                </form>
+                {% else %}—{% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    {% else %}
+    <div class="empty-state"><h3>还没有物资明细</h3><p>添加至少一项物资后，才能提交审批。</p></div>
+    {% endif %}
+</section>
+
+{% if requisition.status == 'DRAFT' %}
+<section class="form-card">
+    <h2 style="margin-top:0;">添加物资</h2>
+    <form method="post" action="{% url 'inventory:requisition_add_line' request_no=requisition.request_no %}" data-busy-text="正在添加…">
+        {% csrf_token %}
+        {{ line_form.non_field_errors }}
+        <div class="form-grid">
+            <div>
+                <label for="{{ line_form.item.id_for_label }}">{{ line_form.item.label }}</label>
+                {{ line_form.item }}{{ line_form.item.errors }}
+            </div>
+            <div>
+                <label for="{{ line_form.quantity_requested.id_for_label }}">{{ line_form.quantity_requested.label }}</label>
+                {{ line_form.quantity_requested }}{{ line_form.quantity_requested.errors }}
+            </div>
+            <div class="full-width">
+                <label for="{{ line_form.notes.id_for_label }}">{{ line_form.notes.label }}</label>
+                {{ line_form.notes }}{{ line_form.notes.errors }}
+            </div>
+        </div>
+        <div class="form-actions"><button type="submit">加入申请</button></div>
+    </form>
+</section>
+{% endif %}
+
+<section class="panel">
+    <h2 style="margin-top:0;">流程操作</h2>
+    <div class="action-toolbar">
+        {% if requisition.status == 'DRAFT' %}
+        <form method="post" action="{% url 'inventory:requisition_submit' request_no=requisition.request_no %}" data-busy-text="正在提交…">
+            {% csrf_token %}<button type="submit">提交审批</button>
+        </form>
+        {% endif %}
+        {% if requisition.status == 'SUBMITTED' and is_admin %}
+        <form method="post" action="{% url 'inventory:requisition_approve' request_no=requisition.request_no %}" data-busy-text="正在批准…">
+            {% csrf_token %}<button type="submit">批准申请</button>
+        </form>
+        <form method="post" action="{% url 'inventory:requisition_reject' request_no=requisition.request_no %}" data-busy-text="正在驳回…">
+            {% csrf_token %}<input type="text" name="reason" aria-label="驳回原因" placeholder="填写驳回原因" required><button class="button-danger" type="submit">驳回申请</button>
+        </form>
+        {% endif %}
+        {% if requisition.status == 'APPROVED' and is_admin %}
+        <form method="post" action="{% url 'inventory:requisition_issue' request_no=requisition.request_no %}" data-busy-text="正在出库…">
+            {% csrf_token %}<button type="submit">执行出库</button>
+        </form>
+        {% endif %}
+        {% if requisition.status == 'ISSUED' %}
+        <a class="link-button button-secondary" href="{% url 'inventory:return_create' request_no=requisition.request_no %}">申请归还物资</a>
+        {% endif %}
+        {% if requisition.status == 'DRAFT' or requisition.status == 'SUBMITTED' %}
+        <form method="post" action="{% url 'inventory:requisition_cancel' request_no=requisition.request_no %}" data-confirm="确定撤回这张申请吗？" data-busy-text="正在撤回…">
+            {% csrf_token %}<button class="button-danger" type="submit">撤回申请</button>
+        </form>
+        {% endif %}
+    </div>
+</section>
+
+{% if returns %}
+<section class="panel">
+    <h2 style="margin-top:0;">归还记录</h2>
+    <div class="table-scroll">
+    <table class="list-table">
+        <thead><tr><th>归还单号</th><th>状态</th><th>创建时间</th><th>操作</th></tr></thead>
+        <tbody>
+        {% for return_record in returns %}
+        <tr>
+            <td class="table-number">{{ return_record.return_no|stringformat:"s"|slice:":8" }}</td>
+            <td><span class="status-badge status-{{ return_record.status|lower }}">{{ return_record.get_status_display }}</span></td>
+            <td>{{ return_record.created_at|date:"Y-m-d H:i" }}</td>
+            <td><a href="{% url 'inventory:return_detail' return_no=return_record.return_no %}">查看详情 →</a></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</section>
+{% endif %}
+{% endblock %}

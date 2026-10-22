@@ -1,0 +1,45 @@
+{% extends "inventory/base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <p class="eyebrow">New request</p>
+        <h1>新建领用申请</h1>
+        <p>先填写用途和归还计划，下一步再选择具体物资。</p>
+    </div>
+</div>
+
+<div class="form-card">
+    <div class="meta-item" style="margin-bottom: 18px;">
+        <span class="meta-label">申请成员</span>
+        <span class="meta-value">{{ member.name }} <span class="muted">（{{ member.member_code }}）</span></span>
+    </div>
+    <form method="post" data-busy-text="正在创建…">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        {{ form.member.as_hidden }}
+        <div class="form-grid">
+            <div class="full-width">
+                <label for="{{ form.purpose.id_for_label }}">{{ form.purpose.label }}</label>
+                {{ form.purpose }}
+                {{ form.purpose.errors }}
+            </div>
+            <div>
+                <label for="{{ form.planned_return_date.id_for_label }}">{{ form.planned_return_date.label }}</label>
+                {{ form.planned_return_date }}
+                <small class="helptext">仅可重复使用物资需要归还。</small>
+                {{ form.planned_return_date.errors }}
+            </div>
+            <div class="full-width">
+                <label for="{{ form.notes.id_for_label }}">{{ form.notes.label }}</label>
+                {{ form.notes }}
+                {{ form.notes.errors }}
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="submit">创建申请草稿</button>
+            <a class="link-button button-ghost" href="{% url 'inventory:requisition_list' %}">取消</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,38 @@
+<!-- sherlock-python/inventory/templates/inventory/section_form.html -->
+
+{% extends "inventory/base.html" %}
+
+{% block content %}
+    {% if section %}
+        {# This edit link points to a non-existent URL, let's fix it too #}
+        <p><a href="{% url 'inventory:inventory_browser' %}">< Back to Inventory Browser</a></p>
+        <h1>Edit <i>"{{ section.name }}"</i></h1>
+    {% else %}
+        <p><a href="{% url 'inventory:inventory_browser' %}">< Back to Inventory Browser</a></p>
+        <h1>Create a New Section</h1>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        
+        {# Display non-field errors, like uniqueness validation #}
+        {{ form.non_field_errors }}
+
+        {# Loop through fields to display them with their errors #}
+        {% for field in form %}
+            <div>
+                <p>{{ field.label_tag }}</p>
+                {% if field.errors %}
+                    <div style="color: red;">
+                        {% for error in field.errors %}
+                            <b>{{ error }}</b>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                <p>{{ field }}</p>
+            </div>
+        {% endfor %}
+
+        <button type="submit">Submit</button>
+    </form>
+{% endblock %}

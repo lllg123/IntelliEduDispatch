@@ -1,0 +1,60 @@
+{% extends "inventory/base.html" %}
+
+{% block content %}
+<h1>系统导航</h1>
+<p>旧版物资管理模块导航。当前项目主入口为<a href="{% url 'teaching:dashboard' %}">智慧教学资源调度工作台</a>。</p>
+
+<div class="sitemap-container">
+    <div class="sitemap-section">
+        <h3>工作台</h3>
+        <ul>
+            <li><a href="{% url 'inventory:dashboard' %}">物资工作台</a></li>
+            <li><a href="{% url 'inventory:requisition_list' %}">领用申请</a></li>
+        </ul>
+    </div>
+
+    <div class="sitemap-section">
+        <h3>物资管理</h3>
+        <ul>
+            <li><a href="{% url 'inventory:inventory_browser' %}">物资台账</a></li>
+            <li><a href="{% url 'inventory:low_stock_report' %}">库存预警</a></li>
+            <li><a href="{% url 'inventory:search' %}">综合搜索</a></li>
+        </ul>
+    </div>
+
+    {% if request.user.profile.role == 'ADMIN' %}
+    <div class="sitemap-section">
+        <h3>管理员业务</h3>
+        <ul>
+            <li><a href="{% url 'inventory:student_list' %}">社团成员</a></li>
+            <li><a href="{% url 'inventory:inventory_count_list' %}">库存盘点</a></li>
+            <li><a href="{% url 'inventory:on_loan_dashboard' %}">借用记录</a></li>
+            <li><a href="{% url 'inventory:overdue_report' %}">逾期记录</a></li>
+            <li><a href="{% url 'inventory:checkout_find_student' %}">旧版借还兼容入口</a></li>
+        </ul>
+    </div>
+    {% endif %}
+
+    <div class="sitemap-section">
+        <h3>工具</h3>
+        <ul>
+            <li><a href="{% url 'inventory:print_queue' %}">标签打印队列</a></li>
+            <li><button type="button" id="sitemap-scan-button" style="all: unset; color: #01a995; font-weight: 700; cursor: pointer; text-decoration: underline;">扫码查询</button></li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const scanButton = document.getElementById('sitemap-scan-button');
+        const globalScanButton = document.getElementById('universal-scan-button');
+        if (scanButton && globalScanButton) {
+            scanButton.addEventListener('click', function() {
+                globalScanButton.click();
+            });
+        }
+    });
+</script>
+{% endblock %}

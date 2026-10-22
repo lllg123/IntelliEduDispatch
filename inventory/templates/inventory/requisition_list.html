@@ -1,0 +1,62 @@
+{% extends "inventory/base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <p class="eyebrow">Workflow</p>
+        <h1>领用申请</h1>
+        <p>提交物资领用或借用申请，跟踪审批、出库和归还状态。</p>
+    </div>
+    <div class="page-actions">
+        <a class="link-button" href="{% url 'inventory:requisition_create' %}">＋ 新建申请</a>
+    </div>
+</div>
+
+<form method="get" class="filter-card" role="search">
+    <div class="filter-field">
+        <label for="requisition-query">搜索申请</label>
+        <input id="requisition-query" type="search" name="q" value="{{ query }}" placeholder="用途、成员姓名或成员编号">
+    </div>
+    <div class="filter-field">
+        <label for="requisition-status">申请状态</label>
+        <select id="requisition-status" name="status">
+            <option value="">全部状态</option>
+            {% for value, label in status_choices %}
+            <option value="{{ value }}" {% if value == selected_status %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="filter-actions">
+        <button type="submit">筛选</button>
+        <a class="link-button button-ghost" href="{% url 'inventory:requisition_list' %}">清除</a>
+    </div>
+</form>
+
+{% if requisitions %}
+<div class="table-scroll">
+<table class="list-table">
+    <thead>
+        <tr><th>申请编号</th><th>申请成员</th><th>领用用途</th><th>状态</th><th>创建时间</th><th>操作</th></tr>
+    </thead>
+    <tbody>
+    {% for requisition in requisitions %}
+        <tr>
+            <td class="table-number">{{ requisition.request_no|stringformat:"s"|slice:":8" }}</td>
+            <td>{{ requisition.member.name }}</td>
+            <td>{{ requisition.purpose }}</td>
+            <td><span class="status-badge status-{{ requisition.status|lower }}">{{ requisition.get_status_display }}</span></td>
+            <td>{{ requisition.created_at|date:"Y-m-d H:i" }}</td>
+            <td><a href="{% url 'inventory:requisition_detail' request_no=requisition.request_no %}">查看详情 →</a></td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+{% else %}
+<div class="empty-state">
+    <h3>没有找到申请</h3>
+    <p>{% if query or selected_status %}请调整筛选条件，或创建一张新申请。{% else %}当前还没有领用申请。{% endif %}</p>
+    <a class="link-button" href="{% url 'inventory:requisition_create' %}">创建第一张申请</a>
+</div>
+{% endif %}
+{% endblock %}

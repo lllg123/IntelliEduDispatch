@@ -1,0 +1,37 @@
+{% extends "inventory/base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <p class="eyebrow">Stock count</p>
+        <h1>库存盘点</h1>
+        <p>录入实盘数量，确认后自动生成盘点调整流水。</p>
+    </div>
+    <div class="page-actions"><a class="link-button" href="{% url 'inventory:inventory_count_create' %}">＋ 新建盘点单</a></div>
+</div>
+
+{% if counts %}
+<div class="table-scroll">
+<table class="list-table">
+    <thead><tr><th>盘点编号</th><th>状态</th><th>创建人</th><th>创建时间</th><th>操作</th></tr></thead>
+    <tbody>
+    {% for count in counts %}
+    <tr>
+        <td class="table-number">{{ count.count_no|stringformat:"s"|slice:":8" }}</td>
+        <td><span class="status-badge status-{{ count.status|lower }}">{{ count.get_status_display }}</span></td>
+        <td>{{ count.created_by.username|default:"系统" }}</td>
+        <td>{{ count.created_at|date:"Y-m-d H:i" }}</td>
+        <td><a href="{% url 'inventory:inventory_count_detail' count_no=count.count_no %}">查看详情 →</a></td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+{% else %}
+<div class="empty-state">
+    <h3>还没有盘点记录</h3>
+    <p>创建盘点单后，系统会自动记录当前启用物资的账面数量。</p>
+    <a class="link-button" href="{% url 'inventory:inventory_count_create' %}">创建盘点单</a>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,140 @@
+<!-- sherlock-python/inventory/templates/inventory/base.html -->
+
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>历史物资管理｜基于LLM的智慧教学资源智能调度系统</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="theme-color" content="#208170">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter+Display:wght@100..900&family=Source+Serif+4:ital,wght@0,200..900;1,200..900&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <link rel="stylesheet" href="{% static 'inventory/css/main.css' %}">
+
+    <script src="https://unpkg.com/htmx.org@1.9.10" integrity="sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC" crossorigin="anonymous"></script>
+ 
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+</head>
+<body>
+    <a class="skip-link" href="#main-content">跳到主要内容</a>
+
+    {% if user.is_authenticated %}
+        <button type="button" class="nav-toggle" id="nav-toggle" aria-controls="app-nav" aria-expanded="false">☰ <span>菜单</span></button>
+        <div class="nav-backdrop" id="nav-backdrop"></div>
+        <nav id="app-nav">
+            <div class="navigation-header">
+                <a href="{% url 'teaching:dashboard' %}" aria-label="返回智慧调度工作台">智慧教学资源调度</a>
+                <div class="brand-copy">历史物资<span>管理模块</span></div>
+            </div>
+            <div class="navigation-content">
+                <div class="navigation-object navigation-category"><span class="navigation-category-title">智慧教学调度</span></div>
+                <div class="navigation-object"><a class="navigation-link" href="{% url 'teaching:dashboard' %}">调度工作台</a></div>
+                <div class="navigation-object"><a class="navigation-link" href="{% url 'teaching:resource_list' %}">教学资源</a></div>
+                <div class="navigation-object"><a class="navigation-link" href="{% url 'teaching:request_list' %}">调度需求</a></div>
+                <div class="navigation-object navigation-category">
+                    <span class="navigation-category-title">历史物资管理</span>
+                </div>
+                <div class="navigation-object">
+                    <a class="navigation-link {% if request.resolver_match.url_name == 'inventory_browser' %}is-active{% endif %}" href="{% url 'inventory:inventory_browser' %}">物资台账</a>
+                </div>
+
+                <div class="navigation-object">
+                    <a class="navigation-link {% if request.resolver_match.url_name == 'low_stock_report' %}is-active{% endif %}" href="{% url 'inventory:low_stock_report' %}">库存预警</a>
+                </div>
+
+                <div class="navigation-object navigation-category">
+                    <span class="navigation-category-title">业务管理</span>
+                </div>
+                {% if request.user.profile.role == 'ADMIN' %}
+                <div class="navigation-object">
+                    <a class="navigation-link" href="{% url 'inventory:student_list' %}">社团成员</a>
+                </div>
+                {% endif %}
+                <div class="navigation-object">
+                    <a class="navigation-link {% if request.resolver_match.url_name == 'requisition_list' or request.resolver_match.url_name == 'requisition_create' or request.resolver_match.url_name == 'requisition_detail' %}is-active{% endif %}" href="{% url 'inventory:requisition_list' %}">领用申请</a>
+                </div>
+                {% if request.user.profile.role == 'ADMIN' %}
+                <div class="navigation-object">
+                    <a class="navigation-link {% if request.resolver_match.url_name == 'on_loan_dashboard' or request.resolver_match.url_name == 'overdue_report' %}is-active{% endif %}" href="{% url 'inventory:on_loan_dashboard' %}">领用与借用记录</a>
+                </div>
+
+                <div class="navigation-object">
+                    <a class="navigation-link" href="{% url 'inventory:overdue_report' %}">逾期记录</a>
+                </div>
+                <div class="navigation-object">
+                    <a class="navigation-link {% if request.resolver_match.url_name == 'inventory_count_list' or request.resolver_match.url_name == 'inventory_count_create' or request.resolver_match.url_name == 'inventory_count_detail' %}is-active{% endif %}" href="{% url 'inventory:inventory_count_list' %}">库存盘点</a>
+                </div>
+                {% endif %}
+
+                <div class="navigation-object navigation-category">
+                    <span class="navigation-category-title">工具</span>
+                </div>
+                <div class="navigation-object">
+                    <a href="#" id="universal-scan-button" class="navigation-link">
+                        <i class="fa-solid fa-qrcode"></i> 扫码查询
+                    </a>
+                </div>
+                <div class="navigation-object">
+                    <a class="navigation-link" href="{% url 'inventory:search' %}">综合搜索</a>
+                </div>
+                <div class="navigation-object">
+                    <a class="navigation-link" href="{% url 'inventory:print_queue' %}">标签打印队列</a>
+                </div>
+                <div class="navigation-object">
+                    <a class="navigation-link" href="{% url 'inventory:sitemap' %}">系统导航</a>
+                </div>
+                <div class="navigation-object navigation-category">
+                    <span class="navigation-category-title">账号</span>
+                </div>
+                <div class="navigation-object">
+                    <a class="navigation-link" href="{% url 'inventory:my_profile' %}">
+                        <i class="fa-solid fa-user"></i> 个人资料（{{ request.user.username }}）
+                    </a>
+                </div>
+                {% if request.user.profile.role == 'ADMIN' %}
+                <div class="navigation-object">
+                    <a class="navigation-link" href="{% url 'inventory:team_management' %}">
+                        <i class="fa-solid fa-users"></i> 用户与权限
+                    </a>
+                </div>
+                {% endif %}
+                <div class="navigation-object">
+                    <form action="{% url 'logout' %}" method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="navigation-link" style="width:100%; text-align:left; background:none; border:none; padding: 7px 25px; font-size: 16px;">退出登录</button>
+                    </form>
+                </div>
+            </div>
+        </nav>
+        <main id="main-content">
+    {% endif %}
+
+    {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+                <p class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">{{ message }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+    
+    {% block content %}{% endblock %}
+
+    {% if user.is_authenticated %}
+        </main>
+    {% endif %}
+
+    {% include "inventory/partials/scanner_modal.html" %}
+
+    <script src="{% static 'inventory/js/app.js' %}?v=4"></script>
+    <script src="{% static 'inventory/js/scanner.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

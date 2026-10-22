@@ -1,0 +1,19 @@
+<!-- sherlock-python/inventory/templates/inventory/space_form.html -->
+
+{% extends "inventory/base.html" %}
+
+{% block content %}
+    {% if space %}
+        <p><a href="{% url 'inventory:inventory_browser' %}">< Back to Inventory Browser</a></p>
+        <h1>Edit <i>"{{ space.name }}"</i></h1>
+    {% else %}
+        <p><a href="{% url 'inventory:inventory_browser' %}">< Back to Inventory Browser</a></p>
+        <h1>Create a New Space</h1>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Submit</button>
+    </form>
+{% endblock %}

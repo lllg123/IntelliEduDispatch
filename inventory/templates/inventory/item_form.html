@@ -1,0 +1,45 @@
+{% extends "inventory/base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <p class="eyebrow">Material profile</p>
+        {% if item %}
+        <h1>编辑物资资料</h1>
+        <p>当前库存是账本字段，不能在资料编辑页面直接覆盖；请使用入库、损耗或盘点操作。</p>
+        {% else %}
+        <h1>新增物资</h1>
+        <p>创建物资后，初始库存会自动生成一条初始库存流水。</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="form-card">
+    <form method="post" data-busy-text="正在保存…">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        <div class="form-grid">
+            {% for field in form %}
+            {% if field.name != 'description' and field.name != 'is_active' %}
+            <div>
+                {{ field.label_tag }}
+                {{ field }}
+                {% if field.help_text %}<small class="helptext">{{ field.help_text }}</small>{% endif %}
+                {{ field.errors }}
+            </div>
+            {% endif %}
+            {% endfor %}
+            <div class="full-width">
+                {{ form.description.label_tag }}{{ form.description }}{{ form.description.errors }}
+            </div>
+            <div class="full-width checkbox-field">
+                <label>{{ form.is_active }} {{ form.is_active.label }}</label>{{ form.is_active.errors }}
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="submit">保存物资</button>
+            <a class="link-button button-ghost" href="{% url 'inventory:inventory_browser' %}">取消</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

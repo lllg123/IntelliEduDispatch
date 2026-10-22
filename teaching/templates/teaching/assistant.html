@@ -1,0 +1,7 @@
+{% extends 'teaching/base.html' %}
+{% block title %}AI 需求解析{% endblock %}
+{% block content %}
+<div class="page-head"><div><p class="eyebrow">AI REQUIREMENT ASSISTANT</p><h1>用自然语言描述教学需求</h1><p>LLM 可提取课程、活动、人数、资源类型与能力标签；时间由您核对后填写。</p></div></div>
+<section class="panel form-panel"><form method="post">{% csrf_token %}<div class="field"><label for="description">教学需求描述</label><textarea id="description" name="description" rows="5" maxlength="1000" required placeholder="例如：下周为 30 名学生上数据结构研讨课，需要带录播和投影的普通教室。">{{ description }}</textarea><small>请勿填写学生姓名、联系方式等敏感资料。</small></div><button class="button primary" type="submit">让 LLM 解析需求</button></form></section>
+{% if parsed_form %}<section class="panel form-panel"><p class="eyebrow">REVIEW BEFORE SUBMITTING</p><h2>核对并补全需求</h2><form method="post" action="{% url 'teaching:request_create' %}">{% csrf_token %}{% for field in parsed_form %}<div class="field"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% for error in field.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</div>{% endfor %}<button class="button primary" type="submit">确认并提交需求</button></form></section>{% endif %}
+{% endblock %}

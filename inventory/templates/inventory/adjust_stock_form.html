@@ -1,0 +1,38 @@
+{% extends "inventory/base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <p class="eyebrow">Stock transaction</p>
+        <h1>调整库存</h1>
+        <p>{{ item.name }} · {{ item.get_material_type_display }} · 当前库存 {{ item.quantity }} {{ item.unit }}</p>
+    </div>
+</div>
+
+<div class="form-card" style="max-width:680px;">
+    <div class="meta-grid">
+        <div class="meta-item"><span class="meta-label">操作</span><span class="meta-value">{{ page_title }}</span></div>
+        <div class="meta-item"><span class="meta-label">当前库存</span><span class="meta-value">{{ item.quantity }} {{ item.unit }}</span></div>
+    </div>
+    <form method="post" data-busy-text="正在提交…">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        <div class="form-grid">
+            <div>
+                <label for="{{ form.quantity.id_for_label }}">调整数量</label>
+                {{ form.quantity }}{{ form.quantity.errors }}
+            </div>
+            <div class="full-width">
+                <label for="{{ form.notes.id_for_label }}">调整原因</label>
+                {{ form.notes }}
+                <small class="helptext">请填写入库来源、损坏情况或盘点差异。</small>
+                {{ form.notes.errors }}
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="submit">确认调整</button>
+            <a class="link-button button-ghost" href="{{ item.get_absolute_url }}">取消</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

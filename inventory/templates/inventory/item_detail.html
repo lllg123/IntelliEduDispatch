@@ -1,0 +1,122 @@
+{% extends "inventory/base.html" %}
+{% load inventory_extras %}
+
+{% block content %}
+<p><a href="{% url 'inventory:inventory_browser' %}">返回物资台账</a></p>
+<h1>{{ item.name }}</h1>
+
+<div class="item-detail-layout">
+    <div class="item-detail-main-column">
+        <div class="label-card">
+            <h3>物资条码</h3>
+            {{ item.generate_barcode_svg|safe }}
+        </div>
+
+        <table class="open-table">
+            <thead><tr><th>属性</th><th>值</th></tr></thead>
+            <tbody>
+                <tr><td>物资编码</td><td>{{ item.item_code }}</td></tr>
+                <tr><td>名称</td><td>{{ item.name }}</td></tr>
+                <tr><td>说明</td><td>{{ item.description|default:"--" }}</td></tr>
+                <tr><td>物资类型</td><td>{{ item.get_material_type_display }}</td></tr>
+                <tr style="font-weight: bold;"><td>当前库存</td><td>{{ item.quantity }} {{ item.unit }}</td></tr>
+                <tr><td>申请可用库存</td><td>{{ item.available_for_issue }} {{ item.unit }}</td></tr>
+                <tr><td>预警阈值</td><td>{{ item.warning_quantity }} {{ item.unit }}</td></tr>
+                <tr><td>创建时间</td><td>{{ item.created_at }}</td></tr>
+                <tr><td>更新时间</td><td>{{ item.updated_at }}</td></tr>
+            </tbody>
+        </table>
+
+        <div class="action-grid">
+            {% if request.user.profile.role == 'ADMIN' %}
+            <div class="action-row">
+                <div><a href="{% url 'inventory:item_update' section_code=item.space.section.section_code space_code=item.space.space_code item_code=item.item_code %}">编辑物资资料</a></div>
+                <div><a href="{% url 'inventory:adjust_stock' section_code=item.space.section.section_code space_code=item.space.space_code item_code=item.item_code action='RECEIVED' %}" class="link-button">入库</a></div>
+            </div>
+            <div class="action-row">
+                <div><a href="{% url 'inventory:adjust_stock' section_code=item.space.section.section_code space_code=item.space.space_code item_code=item.item_code action='DAMAGED' %}" class="link-button destructive-background">登记损坏</a></div>
+            </div>
+            {% endif %}
+            <div class="action-row">
+                <div style="display: flex; gap: 15px;">
+                    <form action="{% url 'inventory:item_add_small_to_queue' section_code=item.space.section.section_code space_code=item.space.space_code item_code=item.item_code %}" method="post" style="margin: 0;">
+                        {% csrf_token %}<button type="submit">加入小标签队列</button>
+                    </form>
+                    <form action="{% url 'inventory:item_add_large_to_queue' section_code=item.space.section.section_code space_code=item.space.space_code item_code=item.item_code %}" method="post" style="margin: 0;">
+                        {% csrf_token %}<button type="submit">加入大标签队列</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        {% if request.user.profile.role == 'ADMIN' %}
+        <hr>
+        <h2 class="destructive" style="margin-top: 2em;">删除物资</h2>
+        <p>删除不可逆，已有库存流水的物资通常会被保护。</p>
+        <form action="{% url 'inventory:item_delete' section_code=item.space.section.section_code space_code=item.space.space_code item_code=item.item_code %}" method="post">
+            {% csrf_token %}
+            <button type="submit" class="destructive-background" onclick="return confirm('确定删除该物资吗？');">确认删除</button>
+        </form>
+        {% endif %}
+    </div>
+
+    <div class="item-detail-history-column">
+        {% if request.user.profile.role == 'ADMIN' %}
+        <h2>兼容借用记录</h2>
+        {% if not item_loan_history %}
+            <p>该物资没有旧版借用记录。</p>
+        {% else %}
+        <div class="log-container-4-rows">
+            <table class="open-table">
+                <thead><tr><th>成员</th><th>借出时间</th><th>归还时间</th></tr></thead>
+                <tbody>
+                {% for log in item_loan_history %}
+                <tr>
+                    <td><a href="{% url 'inventory:student_detail' log.student.id %}">{{ log.student.name }}</a></td>
+                    <td>{{ log.checkout_date|date:"Y-m-d H:i" }}</td>
+                    <td>{{ log.return_date|date:"Y-m-d H:i"|default:"仍在借用" }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+        {% endif %}
+
+        <h2 style="margin-top: 2em;">库存流水</h2>
+        <div class="history-filter-form">
+            <form method="get" style="display:inline-block;"><button type="submit" name="inv_filter" value="week">近 7 天</button></form>
+            <form method="get" style="display:inline-block;"><button type="submit" name="inv_filter" value="month">近 30 天</button></form>
+            <form method="get" style="display:inline-block;"><button type="submit" name="inv_filter" value="year">近一年</button></form>
+            <a href="{{ request.path }}">显示全部</a>
+            <form method="get" style="margin-top: 10px;">
+                <input type="hidden" name="inv_filter" value="custom">
+                <input type="date" name="inv_start_date"> 至 <input type="date" name="inv_end_date">
+                <button type="submit">筛选</button>
+            </form>
+        </div>
+
+        {% if not stock_transactions %}
+            <p>该物资暂时没有库存流水。</p>
+        {% else %}
+        <div class="log-container-3-rows">
+            <table class="open-table">
+                <thead><tr><th>时间</th><th>类型</th><th>变化</th><th>余额</th><th>操作人</th><th>原因</th></tr></thead>
+                <tbody>
+                {% for log in stock_transactions %}
+                <tr>
+                    <td>{{ log.occurred_at|date:"Y-m-d H:i" }}</td>
+                    <td>{{ log.get_transaction_type_display }}</td>
+                    <td style="font-weight: bold;">{{ log.quantity_change }} {{ item.unit }}</td>
+                    <td>{{ log.balance_after }} {{ item.unit }}</td>
+                    <td>{{ log.user.username|default:"系统" }}</td>
+                    <td>{{ log.reason }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

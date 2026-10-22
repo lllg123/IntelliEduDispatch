@@ -1,0 +1,62 @@
+{% extends "inventory/base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <p class="eyebrow">Return</p>
+        <h1>申请归还物资</h1>
+        <p>申请编号：{{ requisition.request_no|stringformat:"s"|slice:":8" }}。只显示可重复使用且尚未归还的物资。</p>
+    </div>
+</div>
+
+<div class="form-card">
+    {% if open_lines %}
+    <form method="post" data-busy-text="正在提交…">
+        {% csrf_token %}
+        <div class="table-scroll">
+        <table class="list-table">
+            <thead><tr><th>物资</th><th>已出库</th><th>尚未归还</th><th>本次归还</th><th>状态</th><th>备注</th></tr></thead>
+            <tbody>
+            {% for line in open_lines %}
+            <tr>
+                <td><strong>{{ line.item.name }}</strong><br><small>{{ line.item.unit }}</small></td>
+                <td>{{ line.quantity_issued }}</td>
+                <td class="table-number">{{ line.quantity_still_out }} {{ line.item.unit }}</td>
+                <td>
+                    <div class="quantity-control">
+                        <button type="button" class="button-ghost" aria-label="减少数量" data-quantity-step="return-{{ line.id }}" data-direction="down">−</button>
+                        <input id="return-{{ line.id }}" type="number" min="0" max="{{ line.quantity_still_out }}" name="quantity_{{ line.id }}" aria-label="{{ line.item.name }}归还数量">
+                        <button type="button" class="button-ghost" aria-label="增加数量" data-quantity-step="return-{{ line.id }}" data-direction="up">＋</button>
+                    </div>
+                </td>
+                <td>
+                    <select name="condition_{{ line.id }}" aria-label="{{ line.item.name }}归还状态">
+                        <option value="OK">正常</option>
+                        <option value="DAMAGED">损坏</option>
+                        <option value="LOST">遗失</option>
+                    </select>
+                </td>
+                <td><input type="text" name="notes_{{ line.id }}" placeholder="可选"></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+        <div style="margin-top:18px;">
+            <label for="return-notes">归还说明</label>
+            <textarea id="return-notes" name="notes" rows="3" placeholder="补充整体说明（可选）"></textarea>
+        </div>
+        <div class="form-actions">
+            <button type="submit">提交归还申请</button>
+            <a class="link-button button-ghost" href="{% url 'inventory:requisition_detail' request_no=requisition.request_no %}">返回申请</a>
+        </div>
+    </form>
+    {% else %}
+    <div class="empty-state">
+        <h3>没有可归还物资</h3>
+        <p>这张申请没有尚未归还的可重复使用物资。</p>
+        <a class="link-button button-ghost" href="{% url 'inventory:requisition_detail' request_no=requisition.request_no %}">返回申请详情</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

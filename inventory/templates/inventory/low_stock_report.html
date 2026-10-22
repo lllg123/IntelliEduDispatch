@@ -1,0 +1,38 @@
+{% extends "inventory/base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <p class="eyebrow">Stock alert</p>
+        <h1>库存预警</h1>
+        <p>当前库存低于或等于物资预警阈值的启用物资。</p>
+    </div>
+</div>
+
+{% if not low_stock_items %}
+<div class="empty-state">
+    <h3>库存状态良好</h3>
+    <p>当前没有需要关注的低库存物资。</p>
+</div>
+{% else %}
+{% for item in low_stock_items %}
+    {% ifchanged item.space.section %}
+        {% if not forloop.first %}</tbody></table></div>{% endif %}
+        <section class="panel" style="margin-bottom:18px;">
+            <h2 style="margin-top:0;">{{ item.space.section.name }}</h2>
+            <div class="table-scroll">
+            <table class="list-table">
+                <thead><tr><th>物资</th><th>存放位置</th><th>当前库存</th><th>预警阈值</th><th>状态</th></tr></thead>
+                <tbody>
+    {% endifchanged %}
+                    <tr>
+                        <td><a href="{{ item.get_absolute_url }}">{{ item.name }}</a></td>
+                        <td>{{ item.space.name }}</td>
+                        <td class="table-number destructive">{{ item.quantity }} {{ item.unit }}</td>
+                        <td>{{ item.warning_quantity }} {{ item.unit }}</td>
+                        <td><span class="status-badge status-rejected">需要关注</span></td>
+                    </tr>
+    {% if forloop.last %}</tbody></table></div></section>{% endif %}
+{% endfor %}
+{% endif %}
+{% endblock %}

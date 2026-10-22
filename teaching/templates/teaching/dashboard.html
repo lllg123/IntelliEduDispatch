@@ -1,0 +1,21 @@
+{% extends 'teaching/base.html' %}
+{% block title %}调度工作台{% endblock %}
+{% block content %}
+<section class="hero">
+  <div><p class="eyebrow">SMART TEACHING OPERATIONS</p><h1>让教学资源安排更清晰、更及时</h1>
+  <p>提交课程时段与教学条件，系统自动排除冲突并推荐合适资源。接入 LLM 后，可获得更贴合需求的候选解释。</p>
+  <div class="actions"><a class="button primary" href="{% url 'teaching:request_create' %}">发起调度需求</a><a class="button light" href="{% url 'teaching:request_assistant' %}">AI 解析自然语言需求</a></div>
+  <p class="hero-status">{% if llm_configured %}模型接口已配置；调用时会验证连接。{% else %}尚未配置模型接口，当前使用规则推荐。{% endif %}</p></div>
+  <div class="hero-symbol" aria-hidden="true">AI<span>+</span></div>
+</section>
+<div class="stat-grid">
+  <div class="stat"><span>可用资源</span><strong>{{ resource_count }}</strong><small>教室 / 实验室 / 设备 / 在线平台</small></div>
+  <div class="stat"><span>{% if is_scheduler %}待调度需求{% else %}我的待调度{% endif %}</span><strong>{{ pending_count }}</strong><small>等待建议与管理员确认</small></div>
+  <div class="stat"><span>已确认排程</span><strong>{{ confirmed_count }}</strong><small>已占用对应资源时段</small></div>
+  <div class="stat accent"><span>LLM 辅助建议</span><strong>{{ ai_count }}</strong><small>来自实际模型调用的建议次数</small></div>
+</div>
+<section class="panel"><div class="section-head"><div><p class="eyebrow">UPCOMING</p><h2>即将开始的教学安排</h2></div><a href="{% url 'teaching:request_list' %}">查看全部 →</a></div>
+{% if upcoming %}<div class="table-wrap"><table><thead><tr><th>课程 / 活动</th><th>时间</th><th>资源</th><th>申请人</th></tr></thead><tbody>
+{% for item in upcoming %}<tr><td><a href="{% url 'teaching:request_detail' item.pk %}"><strong>{{ item.course }}</strong><br><small>{{ item.title }}</small></a></td><td>{{ item.start_at|date:'m-d H:i' }}—{{ item.end_at|date:'H:i' }}</td><td>{{ item.assigned_resource.name }}</td><td>{{ item.requested_by.username }}</td></tr>{% endfor %}
+</tbody></table></div>{% else %}<div class="empty">目前没有已确认的未来安排。可先建立资源，再提交一条教学需求。</div>{% endif %}</section>
+{% endblock %}

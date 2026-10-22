@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+venv/
+.venv/
+venv313/
+.env
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+db.sqlite3.phase*-backup-*
+db.sqlite3.pre-teaching-*
+
+# Media files
+/media/
+
+# IDE files
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*.swo
+
+# PyInstaller generated files
+build/
+dist/
+#*.spec
+
+# Django Production / Build Artifacts
+staticfiles/*
+!staticfiles/.gitkeep
+
+# Secret key file
+.secret_key_file

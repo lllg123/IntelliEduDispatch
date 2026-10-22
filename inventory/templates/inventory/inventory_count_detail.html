@@ -1,0 +1,51 @@
+{% extends "inventory/base.html" %}
+
+{% block content %}
+<div class="detail-hero">
+    <div>
+        <p class="eyebrow">Stock count detail</p>
+        <h1>库存盘点 <span class="muted">#{{ count.count_no|stringformat:"s"|slice:":8" }}</span></h1>
+        <p>{{ count.notes|default:"暂无盘点说明" }}</p>
+    </div>
+    <span class="status-badge status-{{ count.status|lower }}">{{ count.get_status_display }}</span>
+</div>
+
+{% if count.status == 'DRAFT' %}
+<div class="panel" style="border-color:#f0d49c;background:#fffaf0;">
+    <strong>录入提示</strong><p>请填写每项物资的实盘数量。确认时如果库存已经被其他业务改变，系统会阻止确认并要求重新盘点。</p>
+</div>
+{% endif %}
+
+<section class="panel">
+    {% if count.status == 'DRAFT' %}<form method="post" data-busy-text="正在确认…">{% csrf_token %}{% endif %}
+    <div class="table-scroll">
+    <table class="list-table">
+        <thead><tr><th>物资</th><th>账面数量</th><th>实盘数量</th><th>差异</th><th>差异原因</th></tr></thead>
+        <tbody>
+        {% for line in lines %}
+        <tr>
+            <td><strong>{{ line.item.name }}</strong><br><small>{{ line.item.unit }} · {{ line.item.space.name }}</small></td>
+            <td class="table-number">{{ line.system_quantity }}</td>
+            {% if count.status == 'DRAFT' %}
+            <td><input class="quantity-input" type="number" min="0" name="counted_{{ line.id }}" value="{{ line.counted_quantity }}" aria-label="{{ line.item.name }}实盘数量"></td>
+            <td class="muted">确认后计算</td>
+            <td><input type="text" name="reason_{{ line.id }}" value="{{ line.reason }}" placeholder="可选"></td>
+            {% else %}
+            <td class="table-number">{{ line.counted_quantity }}</td>
+            <td class="table-number {% if line.difference < 0 %}destructive{% elif line.difference > 0 %}positive{% endif %}">{{ line.difference }}</td>
+            <td>{{ line.reason|default:"—" }}</td>
+            {% endif %}
+        </tr>
+        {% empty %}<tr><td colspan="5">盘点单没有物资明细。</td></tr>{% endfor %}
+        </tbody>
+    </table>
+    </div>
+    {% if count.status == 'DRAFT' %}
+    <div class="form-actions"><button type="submit">保存实盘并确认</button><a class="link-button button-ghost" href="{% url 'inventory:inventory_count_list' %}">取消</a></div>
+    </form>
+    {% else %}
+    <p class="muted">确认人：{{ count.confirmed_by.username|default:"系统" }} · {{ count.confirmed_at|date:"Y-m-d H:i" }}</p>
+    {% endif %}
+</section>
+<p><a href="{% url 'inventory:inventory_count_list' %}">← 返回盘点列表</a></p>
+{% endblock %}

@@ -1,0 +1,39 @@
+<!-- sherlock-python/inventory/templates/inventory/overdue_report.html -->
+
+{% extends "inventory/base.html" %}
+
+{% block content %}
+    <h1>Overdue Items Report</h1>
+    <p>A list of all items that have passed their due date and have not been returned.</p>
+
+    {% if not overdue_logs %}
+        <p>There are no overdue items. Excellent!</p>
+    {% else %}
+        <table class="open-table">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Qty on Loan</th>
+                    <th>Student</th>
+                    <th>Checked Out</th>
+                    <th>Date Due</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in overdue_logs %}
+                <tr class="overdue-item"> {# We can apply the class directly here #}
+                    <td><a href="{{ log.item.get_absolute_url }}">{{ log.item.name }}</a></td>
+                    <td>{{ log.quantity_still_on_loan }}</td>
+                    <td><a href="{% url 'inventory:student_detail' log.student.id %}">{{ log.student.name }}</a></td>
+                    <td>{{ log.checkout_date|date:"d M Y" }}</td>
+                    <td>{{ log.due_date|date:"d M Y" }}</td>
+                    <td>
+                        <a href="{% url 'inventory:check_in_page' log.id %}" class="link-button" style="padding: 8px 12px; font-size: 14px;">Check In</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+{% endblock %}

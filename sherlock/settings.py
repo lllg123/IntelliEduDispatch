@@ -1,0 +1,211 @@
+# sherlock-python/sherlock/settings.py
+
+"""
+Django settings for sherlock project.
+
+The application baseline is maintained on Django 6.0.7.
+
+For more information on this file, see
+https://docs.djangoproject.com/en/5.1/topics/settings/
+
+For the full list of settings and their values, see
+https://docs.djangoproject.com/en/5.1/ref/settings/
+"""
+
+import socket
+import os
+import sys
+from pathlib import Path
+from django.core.management.utils import get_random_secret_key
+from django.core.exceptions import ImproperlyConfigured
+
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+# Quick-start development settings - unsuitable for production
+# See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
+
+# DEBUG mode should be True for local development and False for production.
+
+DEBUG = os.environ.get('DEBUG', 'True' if 'runserver' in sys.argv else 'False').lower() in ('true', '1', 't')
+
+
+try:
+    SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
+    if SECRET_KEY is None:
+        secret_key_file = BASE_DIR / '.secret_key_file'
+        
+        if secret_key_file.exists():
+            with open(secret_key_file, 'r') as f:
+                SECRET_KEY = f.read().strip()
+        else:
+            print("INFO: No secret key file found. Generating a new one.")
+            SECRET_KEY = get_random_secret_key()
+            with open(secret_key_file, 'w') as f:
+                f.write(SECRET_KEY)
+            print(f"INFO: New secret key has been saved to {secret_key_file}")
+            
+    if not SECRET_KEY:
+        raise ValueError("Secret key is empty after trying all methods.")
+
+except Exception as e:
+    raise ImproperlyConfigured(
+        f"CRITICAL ERROR: Could not find or create a SECRET_KEY. "
+        f"Ensure the directory is writable. Original error: {e}"
+    )
+
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+if not DEBUG:
+    detected_ip = os.environ.get('SHERLOCK_ALLOWED_IP')
+    if detected_ip:
+        ALLOWED_HOSTS.append(detected_ip)
+    
+    try:
+        hostname = socket.gethostname()
+        if hostname:
+            ALLOWED_HOSTS.append(hostname)
+    except Exception:
+        pass
+
+
+# Application definition
+
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'inventory.apps.InventoryConfig',
+    'teaching.apps.TeachingConfig',
+]
+
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'inventory.middleware.UpdateLastSeenMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+ROOT_URLCONF = 'sherlock.urls'
+
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [BASE_DIR / 'templates'],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]
+
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
+
+WSGI_APPLICATION = 'sherlock.wsgi.application'
+
+
+# Database
+# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
+
+
+# Password validation
+# https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
+
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {
+            'min_length': 8,
+        }
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
+]
+
+
+# Internationalization
+# https://docs.djangoproject.com/en/5.1/topics/i18n/
+
+LANGUAGE_CODE = 'zh-hans'
+
+TIME_ZONE = 'Asia/Shanghai'
+
+USE_I18N = True
+
+USE_TZ = True
+
+
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/5.1/howto/static-files/
+
+STATIC_URL = 'static/'
+
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+import sys
+
+if 'test' in sys.argv:
+    staticfiles_backend = "django.contrib.staticfiles.storage.StaticFilesStorage"
+else:
+    staticfiles_backend = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": staticfiles_backend,
+    },
+}
+
+# Default primary key field type
+# https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+LOGIN_REDIRECT_URL = "/teaching/"
+
+LOGOUT_REDIRECT_URL = "/"
+
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+SESSION_COOKIE_AGE = 1800
+
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    
+    CSRF_TRUSTED_ORIGINS = [f'https://{host}:8443' for host in ALLOWED_HOSTS]
+
+    CSRF_TRUSTED_ORIGINS.extend(['https://localhost:8443', 'https://127.0.0.1:8443'])

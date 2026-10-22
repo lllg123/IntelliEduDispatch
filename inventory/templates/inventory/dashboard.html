@@ -1,0 +1,115 @@
+{% extends "inventory/base.html" %}
+
+{% block content %}
+<h1>社团物资工作台</h1>
+<p>这里汇总当前库存、领用申请和可重复使用物资借用情况。</p>
+
+<div class="dashboard-grid">
+    <a href="{% url 'inventory:requisition_list' %}" class="dashboard-card">
+        <div class="card-header"><span class="card-label">借用中数量</span><i class="fa-solid fa-boxes-packing card-icon"></i></div>
+        <span class="card-value">{{ total_items_on_loan }}</span>
+    </a>
+    <a href="{% url 'inventory:requisition_list' %}" class="dashboard-card {% if overdue_items_count > 0 %}card-danger{% endif %}">
+        <div class="card-header"><span class="card-label">逾期申请</span><i class="fa-solid fa-triangle-exclamation card-icon"></i></div>
+        <span class="card-value">{{ overdue_items_count }}</span>
+    </a>
+    <a href="{% url 'inventory:low_stock_report' %}" class="dashboard-card {% if low_stock_items_count > 0 %}card-warning{% endif %}">
+        <div class="card-header"><span class="card-label">库存预警物资</span><i class="fa-solid fa-battery-quarter card-icon"></i></div>
+        <span class="card-value">{{ low_stock_items_count }}</span>
+    </a>
+    <a href="{% url 'inventory:requisition_list' %}" class="dashboard-card">
+        <div class="card-header"><span class="card-label">待审批申请</span><i class="fa-solid fa-clipboard-list card-icon"></i></div>
+        <span class="card-value">{{ pending_requisitions_count }}</span>
+    </a>
+    {% if is_admin %}
+    <a href="{% url 'inventory:student_list' %}" class="dashboard-card">
+        <div class="card-header"><span class="card-label">本月新增成员</span><i class="fa-solid fa-user-plus card-icon"></i></div>
+        <span class="card-value">{{ new_members_count }}</span>
+    </a>
+    {% endif %}
+</div>
+
+<div class="dashboard-feeds">
+    <div class="feed-column">
+        <h3>今日最近出库</h3>
+        {% if recently_checked_out %}
+        <ul>
+            {% for requisition in recently_checked_out %}
+            <li>
+                <span><strong><a href="{% url 'inventory:requisition_detail' request_no=requisition.request_no %}">申请 {{ requisition.request_no|stringformat:"s"|slice:":8" }}</a></strong>：{{ requisition.member.name }}，{{ requisition.purpose }}</span>
+                <span class="feed-due-date">{{ requisition.issued_at|date:"H:i" }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p>今日暂无出库记录。</p>
+        {% endif %}
+    </div>
+    <div class="feed-column">
+        <h3>未来三天应归还</h3>
+        {% if items_due_soon %}
+        <ul>
+            {% for requisition in items_due_soon %}
+            <li>
+                <span><strong><a href="{% url 'inventory:requisition_detail' request_no=requisition.request_no %}">申请 {{ requisition.request_no|stringformat:"s"|slice:":8" }}</a></strong>：{{ requisition.member.name }}</span>
+                <span class="feed-due-date">{{ requisition.planned_return_date|date:"Y-m-d H:i" }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p>未来三天暂无应归还申请。</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="dashboard-charts">
+    <div class="chart-container">
+        <h3>近七日出库活动</h3>
+        <canvas id="loanActivityChart"></canvas>
+    </div>
+    <div class="chart-container">
+        <h3>出库较多的物资</h3>
+        <canvas id="popularItemsChart"></canvas>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const loanCtx = document.getElementById('loanActivityChart').getContext('2d');
+        new Chart(loanCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ loan_activity_labels|safe }},
+                datasets: [{
+                    label: '出库笔数',
+                    data: {{ loan_activity_data|safe }},
+                    backgroundColor: 'rgba(32, 129, 112, 0.6)',
+                    borderColor: 'rgba(32, 129, 112, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: { scales: { y: { beginAtZero: true } } }
+        });
+
+        const popularCtx = document.getElementById('popularItemsChart').getContext('2d');
+        new Chart(popularCtx, {
+            type: 'doughnut',
+            data: {
+                labels: {{ popular_items_labels|safe }},
+                datasets: [{
+                    label: '出库次数',
+                    data: {{ popular_items_data|safe }},
+                    backgroundColor: [
+                        'rgba(32, 129, 112, 0.8)',
+                        'rgba(1, 169, 149, 0.7)',
+                        'rgba(157, 204, 82, 0.6)',
+                        'rgba(113, 179, 7, 0.5)',
+                        'rgba(84, 130, 10, 0.4)'
+                    ],
+                    hoverOffset: 4
+                }]
+            }
+        });
+    });
+</script>
+{% endblock %}

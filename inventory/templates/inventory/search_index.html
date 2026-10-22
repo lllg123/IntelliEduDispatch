@@ -1,0 +1,59 @@
+<!-- sherlock-python/inventory/templates/inventory/search_index.html -->
+
+{% extends "inventory/base.html" %}
+{% load inventory_extras %}
+
+{% block content %}
+    <h1>Unified Search</h1>
+    <button type="button" id="search-page-scan-button" class="link-button">
+        <i class="fa-solid fa-qrcode"></i> Scan a Code
+    </button>
+
+    <div class="search-container">
+        <!-- === ITEM SEARCH COLUMN === -->
+        <div class="search-column">
+            <h2>Search for Items</h2>
+            <div>
+                <input type="search"
+                       name="item_query"
+                       placeholder="Search by item name..."
+                       class="student-search-input"
+                       hx-get="{% url 'inventory:live_unified_item_search' %}"
+                       hx-trigger="keyup changed delay:200ms"
+                       hx-target="#item-search-results-tbody"
+                       hx-swap="innerHTML">
+            </div>
+            <table class="open-table" style="margin-top: 1em;">
+                <thead>
+                    <tr><th>Name</th><th>Type</th><th>Last Updated</th></tr>
+                </thead>
+                <tbody id="item-search-results-tbody">
+                    <!-- HTMX will inject live results here -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- === STUDENT SEARCH COLUMN === -->
+        <div class="search-column">
+            <h2>Search for Students</h2>
+            <div>
+                <input type="search"
+                       name="student_query"
+                       placeholder="Search by name or admission no..."
+                       class="student-search-input"
+                       hx-get="{% url 'inventory:live_unified_student_search' %}"
+                       hx-trigger="keyup changed delay:200ms"
+                       hx-target="#student-search-results-tbody"
+                       hx-swap="innerHTML">
+            </div>
+            <table class="open-table" style="margin-top: 1em;">
+                <thead>
+                    <tr><th>Name</th><th>Admission No.</th><th>Class</th></tr>
+                </thead>
+                <tbody id="student-search-results-tbody">
+                    <!-- HTMX will inject live results here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

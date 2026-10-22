@@ -1,0 +1,6 @@
+{% extends 'teaching/base.html' %}
+{% block title %}调度需求{% endblock %}
+{% block content %}
+<div class="page-head"><div><p class="eyebrow">SCHEDULING REQUESTS</p><h1>{% if is_scheduler %}全部调度需求{% else %}我的调度需求{% endif %}</h1><p>从需求、智能建议到人工确认，每一步均有记录。</p></div><a class="button primary" href="{% url 'teaching:request_create' %}">发起需求</a></div>
+<section class="panel">{% if demands %}<div class="table-wrap"><table><thead><tr><th>课程 / 活动</th><th>起止时间</th><th>需求</th><th>分配资源</th><th>状态</th></tr></thead><tbody>{% for item in demands %}<tr><td><a href="{% url 'teaching:request_detail' item.pk %}"><strong>{{ item.course }}</strong><br><small>{{ item.title }}</small></a></td><td>{{ item.start_at|date:'Y-m-d H:i' }}<br><small>至 {{ item.end_at|date:'Y-m-d H:i' }}</small></td><td>{{ item.get_resource_kind_display }} · {{ item.expected_attendees }} 人</td><td>{{ item.assigned_resource.name|default:'待分配' }}</td><td><span class="badge {% if item.status == 'CANCELLED' %}muted{% endif %}">{{ item.get_status_display }}</span></td></tr>{% endfor %}</tbody></table></div>{% else %}<div class="empty">还没有调度需求。现在可以创建第一条需求。</div>{% endif %}</section>
+{% endblock %}

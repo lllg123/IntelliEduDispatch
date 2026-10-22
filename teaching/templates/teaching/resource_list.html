@@ -1,0 +1,6 @@
+{% extends 'teaching/base.html' %}
+{% block title %}教学资源{% endblock %}
+{% block content %}
+<div class="page-head"><div><p class="eyebrow">RESOURCE CATALOG</p><h1>教学资源</h1><p>统一管理可调度的教室、实验室、教学设备和在线平台。</p></div>{% if is_scheduler %}<a class="button primary" href="{% url 'teaching:resource_create' %}">新增资源</a>{% endif %}</div>
+<section class="panel">{% if resources %}<div class="table-wrap"><table><thead><tr><th>名称 / 编码</th><th>类型</th><th>容量</th><th>位置</th><th>能力标签</th><th>状态</th>{% if is_scheduler %}<th>操作</th>{% endif %}</tr></thead><tbody>{% for resource in resources %}<tr><td><strong>{{ resource.name }}</strong><br><small>{{ resource.code }}</small></td><td>{{ resource.get_kind_display }}</td><td>{{ resource.capacity }} 人</td><td>{{ resource.location|default:'—' }}</td><td>{{ resource.features|default:'—' }}</td><td><span class="badge {% if not resource.is_active %}muted{% endif %}">{{ resource.is_active|yesno:'可调度,停用' }}</span></td>{% if is_scheduler %}<td><a href="{% url 'teaching:resource_edit' resource.pk %}">编辑</a></td>{% endif %}</tr>{% endfor %}</tbody></table></div>{% else %}<div class="empty">尚无教学资源。{% if is_scheduler %}请先新增资源，智能调度才能生成候选。{% endif %}</div>{% endif %}</section>
+{% endblock %}

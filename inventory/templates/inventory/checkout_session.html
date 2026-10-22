@@ -1,0 +1,126 @@
+<!-- sherlock-python/inventory/templates/inventory/checkout_session.html -->
+
+{% extends "inventory/base.html" %}
+
+{% block content %}
+    <h3>Checkout for: <a href="{% url 'inventory:student_detail' student.id %}">{{ student.name }}</a></h3>
+    <hr>
+
+    <h4>1. Scan or Enter Item Code/Name</h4>
+    
+    <form method="post" id="add-item-form">
+        {% csrf_token %}
+        <input type="search"
+               id="barcode-input"
+               name="query"
+               placeholder="Scan barcode or type to search..."
+               autofocus
+               class="student-search-input"
+               hx-get="{% url 'inventory:live_item_search' student.id %}"
+               hx-trigger="keyup changed delay:200ms"
+               hx-target="#item-search-results"
+               hx-swap="innerHTML">
+        
+        
+        <button type="submit" name="add_item">Add Item</button>
+
+        <button type="button" id="scan-item-button" class="link-button" style="padding: 8px 12px; font-size: 16px;">
+            <i class="fa-solid fa-camera"></i> Scan
+        </button>
+    </form>
+
+    <form method="post" id="scanner-form" style="display: none;">
+        {% csrf_token %}
+        <input type="hidden" name="barcode" id="scanner-barcode-input">
+        <input type="hidden" name="add_item_from_scan" value="true">
+    </form>
+    
+    <div id="item-search-results"></div>
+
+    <hr>
+    
+    <h4>2. Items to be Checked Out:</h4>
+    {% if items_in_session %}
+        <table class="open-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Qty</th>
+                    <th>Available</th>
+                    <th>Location</th>
+                    <th>Barcode</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for detail in items_in_session %}
+                <tr>
+                    <td>{{ detail.item.name }}</td>
+                    <td>
+                        <form action="{% url 'inventory:checkout_update_item_quantity' student.id detail.item.id %}" method="post">
+                            {% csrf_token %}
+                            <input type="number" name="quantity" value="{{ detail.quantity }}" min="1" style="width: 60px;" onchange="this.form.submit()">
+                        </form>
+                    </td>
+                    <td>{{ detail.item.available_quantity }}</td>
+                    <td>{{ detail.item.space.name }} / {{ detail.item.space.section.name }}</td>
+                    <td class="barcode-font">
+                        {{ detail.item.space.section.section_code|stringformat:"04d" }}{{ detail.item.space.space_code|stringformat:"04d" }}{{ detail.item.item_code|stringformat:"04d" }}
+                    </td>
+                    <td>
+                        <form action="{% url 'inventory:checkout_remove_item' student.id detail.item.id %}" method="post">
+                            {% csrf_token %}
+                            <button type="submit" class="destructive-background">Remove</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <hr style="margin-top: 2em;">
+
+        <h4>3. Set Return Date</h4>
+        <form method="post">
+            {% csrf_token %}
+            <div>
+                <label for="notes">Reason for Checkout:</label><br>
+                <textarea name="notes" id="notes" class="notes-textarea" required></textarea>
+            </div>
+            <div style="margin-top: 1em;">
+                <input type="radio" id="due_days" name="due_date_option" value="days" checked>
+                <label for="due_days">Return in</label>
+                <input type="number" name="days_to_return" value="7" min="1" style="width: 60px;">
+                <label for="due_days">days (defaults to 2:00 PM)</label>
+            </div>
+            <div style="margin-top: 10px;">
+                <input type="radio" id="due_date" name="due_date_option" value="date">
+                <label for="due_date">Return on specific date and time:</label>
+                <input type="datetime-local" id="return_date_input" name="return_date">
+            </div>
+
+            <button type="submit" name="complete_checkout" style="font-size: 20px; padding: 15px 30px; margin-top: 20px;">
+                Complete Checkout ({{ total_units_in_session }} Units)
+            </button>
+        </form>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const dateTimeInput = document.getElementById('return_date_input');
+                if (dateTimeInput) {
+                    dateTimeInput.addEventListener('change', function() {
+                        const selectedDateTime = new Date(this.value);
+                        const now = new Date();
+
+                        if (selectedDateTime < now) {
+                            alert("Invalid Time: The return date and time cannot be in the past.");
+                            this.value = ''; 
+                        }
+                    });
+                }
+            });
+        </script>
+    {% else %}
+        <p>No items added yet. Scan an item or search to begin.</p>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,44 @@
+<!-- sherlock-python/inventory/templates/inventory/section_detail.html -->
+
+{% extends "inventory/base.html" %}
+
+{% block content %}
+    <p><a href="{% url 'inventory:inventory_browser' %}">返回物资台账</a></p>
+    <h1>{{ section.name }}</h1>
+
+    <div class="detail-container">
+        <div class="label-card">
+            {{ section.generate_qr_code_svg|safe }}
+        </div>
+
+        <table class="open-table">
+            <thead>
+                <tr><th>属性</th><th>值</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>分类编码</td><td>{{ section.section_code }}</td></tr>
+                <tr><td>名称</td><td>{{ section.name }}</td></tr>
+                <tr><td>说明</td><td>{{ section.description|default:"--" }}</td></tr>
+                <tr><td>创建时间</td><td>{{ section.created_at }}</td></tr>
+                <tr><td>更新时间</td><td>{{ section.updated_at }}</td></tr>
+            </tbody>
+        </table>
+
+        <div class="action-area">
+            {% if request.user.profile.role == 'ADMIN' %}<a href="{% url 'inventory:section_update' section.section_code %}">编辑</a>{% endif %}
+            <form action="{% url 'inventory:section_add_to_queue' section.section_code %}" method="post">
+                {% csrf_token %}
+                <button type="submit">加入打印队列</button>
+            </form>
+        </div>
+        
+        {% if request.user.profile.role == 'ADMIN' %}
+            <h2 class="destructive">Delete this section</h2>
+            <p>If you no longer use this section, you can choose to delete it. All spaces associated with this section will be destroyed. This action is irreversible.</p>
+            <form action="{% url 'inventory:section_delete' section.section_code %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="destructive-background" onclick="return confirm('Are you sure you want to delete this section? This action is irreversible.');">I understand the consequences, delete this section</button>
+            </form>
+        {% endif %}
+    </div>
+{% endblock %}
